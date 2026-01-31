@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spam Detection System - Machine Learning Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #495057;
+        }
+        .main-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+            margin: 30px auto;
+            max-width: 800px;
+            border: 1px solid #dee2e6;
+        }
+        .header {
+            background: linear-gradient(45deg, #6c757d, #5a6268);
+            color: white;
+            padding: 30px;
+            border-radius: 12px 12px 0 0;
+            text-align: center;
+        }
+        .prediction-card {
+            border-radius: 10px;
+            margin: 20px 0;
+            padding: 20px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 1.1em;
+            border: 1px solid transparent;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .spam {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            border-color: #bd2130;
+        }
+        .not-spam {
+            background: linear-gradient(45deg, #28a745, #218838);
+            color: white;
+            border-color: #1e7e34;
+        }
+        .test-messages {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #e9ecef;
+        }
+        .test-message {
+            background: white;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #495057;
+        }
+        .test-message:hover {
+            background: #f1f3f4;
+            border-color: #6c757d;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .confidence-bar {
+            height: 8px;
+            border-radius: 4px;
+            margin: 15px 0;
+            background: #e9ecef;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+        }
+        .confidence-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 3px;
+        }
+        .features {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #e9ecef;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin: 12px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #6c757d;
+            color: #495057;
+            border: 1px solid #e9ecef;
+        }
+        .btn-analyze {
+            background: linear-gradient(45deg, #6c757d, #5a6268);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+            background: linear-gradient(45deg, #5a6268, #495057);
+        }
+        .explanation {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #6c757d;
+            color: #495057;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <div class="header">
+                <h1><i class="fas fa-shield-alt"></i> Spam Detection System</h1>
+                <p>Machine Learning Text Classification Demo</p>
+            </div>
+
+            <div class="p-4">
+                <!-- Input Section -->
+                <div class="mb-4">
+                    <label for="messageInput" class="form-label fw-bold">
+                        <i class="fas fa-comment"></i> Enter your message:
+                    </label>
+                    <textarea 
+                        class="form-control form-control-lg" 
+                        id="messageInput" 
+                        rows="4" 
+                        placeholder="Type your message here to check if it's spam..."
+                    ></textarea>
+                    <div class="mt-3">
+                        <button class="btn btn-analyze text-white" onclick="analyzeMessage()">
+                            <i class="fas fa-search"></i> Analyze Message
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="clearInput()" style="border-radius: 25px; padding: 12px 25px; border-color: #6c757d; color: #6c757d;">
+                            <i class="fas fa-eraser"></i> Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="results" style="display: none;">
+                    <div class="prediction-card" id="predictionResult">
+                        <!-- Prediction result will appear here -->
+                    </div>
+                    
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidenceBar"></div>
+                    </div>
+                    
+                    <div class="text-center text-muted">
+                        <small id="confidenceText"></small>
+                    </div>
+                </div>
+
+                <!-- Test Messages Section -->
+                <div class="test-messages">
+                    <h5><i class="fas fa-flask"></i> Test Messages (Click to try)</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success">Likely Not Spam:</h6>
+                            <div class="test-message" onclick="testMessage('Hi John, how are you doing today?')">
+                                Hi John, how are you doing today?
+                            </div>
+                            <div class="test-message" onclick="testMessage('Meeting rescheduled to 3 PM tomorrow')">
+                                Meeting rescheduled to 3 PM tomorrow
+                            </div>
+                            <div class="test-message" onclick="testMessage('Thank you for your order confirmation')">
+                                Thank you for your order confirmation
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-danger">Likely Spam:</h6>
+                            <div class="test-message" onclick="testMessage('CONGRATULATIONS! You won $1,000,000! Click here NOW!')">
+                                CONGRATULATIONS! You won $1,000,000! Click here NOW!
+                            </div>
+                            <div class="test-message" onclick="testMessage('FREE MONEY! Act now! Limited time offer!!!')">
+                                FREE MONEY! Act now! Limited time offer!!!
+                            </div>
+                            <div class="test-message" onclick="testMessage('URGENT! Your account will be closed! Send money immediately!')">
+                                URGENT! Your account will be closed! Send money immediately!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Section -->
+                <div class="features">
+                    <h5><i class="fas fa-cogs"></i> How It Works</h5>
+                    <div class="feature-item">
+                        <i class="fas fa-text-width text-muted me-3"></i>
+                        <div>
+                            <strong>Text Vectorization:</strong> Converts text to numerical features
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-brain text-muted me-3"></i>
+                        <div>
+                            <strong>Pattern Recognition:</strong> Identifies spam keywords and patterns
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-percentage text-muted me-3"></i>
+                        <div>
+                            <strong>Confidence Scoring:</strong> Provides probability of spam detection
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explanation Section -->
+                <div class="explanation">
+                    <h5><i class="fas fa-info-circle"></i> About This Demo</h5>
+                    <p>
+                        This is a <strong>client-side simulation</strong> of a spam detection system. 
+                        In a real implementation, you would:
+                    </p>
+                    <ul>
+                        <li>Train a model using Python with libraries like scikit-learn</li>
+                        <li>Use proper text vectorization (TF-IDF, word embeddings)</li>
+                        <li>Implement classification algorithms (Naive Bayes, SVM, Neural Networks)</li>
+                        <li>Evaluate model performance with metrics like accuracy, precision, recall</li>
+                        <li>Deploy the model to a server for real predictions</li>
+                    </ul>
+                    <p>
+                        <strong>To test if it's working:</strong> Try the test messages above, 
+                        type your own messages, and observe the predictions and confidence scores!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="spam-detector-enhanced.js"></script>
+</body>
+</html>

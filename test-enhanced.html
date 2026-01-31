@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Enhanced Spam Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; padding: 20px; }
+        .test-result { 
+            padding: 10px; 
+            margin: 5px 0; 
+            border-radius: 5px; 
+            font-family: monospace; 
+        }
+        .spam { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .not-spam { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Enhanced Spam Detection Test Suite</h2>
+        <div id="testResults"></div>
+    </div>
+
+    <script src="spam-detector-enhanced.js"></script>
+    <script>
+        const testCases = [
+            // Definite spam cases
+            { text: "FREE MONEY!!! Click here now!", expected: true, desc: "Classic spam with urgency and money" },
+            { text: "CONGRATULATIONS! You won $1,000,000!", expected: true, desc: "Lottery scam format" },
+            { text: "URGENT! Your account will be closed! Send money immediately!", expected: true, desc: "Fear-based spam" },
+            { text: "FREE LOTTERY WINNER!!! Claim your prize NOW!!!", expected: true, desc: "Multiple spam indicators" },
+            
+            // Definite non-spam cases
+            { text: "Hello John, how are you doing today?", expected: false, desc: "Casual greeting" },
+            { text: "Meeting rescheduled to 3 PM tomorrow", expected: false, desc: "Business communication" },
+            { text: "Thank you for your order confirmation", expected: false, desc: "Order confirmation" },
+            { text: "I need help with my account settings please", expected: false, desc: "Support request" },
+            
+            // Edge cases
+            { text: "Hi!", expected: false, desc: "Very short message" },
+            { text: "", expected: false, desc: "Empty message" },
+            { text: "Hello there, I have a special offer for you today", expected: false, desc: "Mixed content - mostly safe" },
+            { text: "FREE", expected: true, desc: "Single spam word" },
+            
+            // Tricky cases
+            { text: "Please click here to verify your account details", expected: true, desc: "Phishing attempt" },
+            { text: "Congratulations on your promotion! Well deserved!", expected: false, desc: "Genuine congratulations" },
+            { text: "Limited time offer - act now for special discount", expected: true, desc: "Marketing spam" },
+            { text: "Schedule our weekly team meeting for next Tuesday", expected: false, desc: "Business scheduling" }
+        ];
+
+        function runTests() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = '<h4>Test Results:</h4>';
+            
+            let correct = 0;
+            let total = 0;
+            
+            testCases.forEach((test, index) => {
+                total++;
+                const result = spamDetector.predict(test.text);
+                const isCorrect = result.isSpam === test.expected;
+                if (isCorrect) correct++;
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `test-result ${isCorrect ? 'not-spam' : 'spam'}`;
+                resultDiv.innerHTML = `
+                    <strong>Test ${index + 1}: ${test.desc}</strong><br>
+                    Text: "${test.text}"<br>
+                    Expected: ${test.expected ? 'SPAM' : 'NOT SPAM'}<br>
+                    Predicted: ${result.isSpam ? 'SPAM' : 'NOT SPAM'}<br>
+                    Confidence: ${Math.round(result.confidence * 100)}%<br>
+                    Spam Probability: ${(result.spamProbability * 100).toFixed(1)}%<br>
+                    Result: ${isCorrect ? '✅ CORRECT' : '❌ INCORRECT'}
+                    ${result.error ? `<br>Error: ${result.error}` : ''}
+                `;
+                resultsDiv.appendChild(resultDiv);
+            });
+            
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'mt-4 p-3 rounded';
+            summaryDiv.style.background = correct/total >= 0.8 ? '#d4edda' : '#fff3cd';
+            summaryDiv.innerHTML = `
+                <h5>Test Summary</h5>
+                <p><strong>Accuracy: ${Math.round(correct/total * 100)}% (${correct}/${total} correct)</strong></p>
+                <p>${correct/total >= 0.8 ? '✅ Great performance!' : '⚠️ Some improvements needed'}</p>
+            `;
+            resultsDiv.appendChild(summaryDiv);
+            
+            console.log(`Test completed: ${correct}/${total} correct (${Math.round(correct/total * 100)}%)`);
+        }
+
+        // Run tests after page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(runTests, 1000); // Give time for initialization
+        });
+    </script>
+</body>
+</html>
